@@ -2,8 +2,8 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useStore } from '../store/useStore';
 
 // 定高虚拟滚动：数千章的目录只渲染可视区附近的条目，避免长列表卡顿。
-// 行高须与 CSS .chapter-item 保持一致（32px）。
-const ROW = 32;
+// 行高须与 CSS .chapter-item 保持一致（44px，双行省略）。
+const ROW = 44;
 const OVERSCAN = 10;
 
 export default function ChapterTOC() {
@@ -45,23 +45,27 @@ export default function ChapterTOC() {
   const slice = chapters.slice(start, end);
 
   return (
-    <div className="sidebar" ref={listRef} onScroll={recompute}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="sidebar">
+      {/* 固定头部：不随列表滚动，「关闭」按钮始终可见可点 */}
+      <div className="toc-header">
         <h3>目录（{chapters.length}）</h3>
-        <button onClick={() => toggleToc(false)}>关闭</button>
+        <button className="toc-close" onClick={() => toggleToc(false)}>关闭</button>
       </div>
-      {/* 顶部占位 + 可视窗口条目 + 底部占位，撑出真实滚动高度 */}
-      <div style={{ height: start * ROW }} />
-      {slice.map((c) => (
-        <div
-          key={c.index}
-          className={'chapter-item' + (c.index === currentChapter ? ' active' : '')}
-          onClick={() => loadChapter(c.index)}
-        >
-          {c.title}
-        </div>
-      ))}
-      <div style={{ height: (chapters.length - end) * ROW }} />
+      {/* 滚动容器：顶部占位 + 可视窗口条目 + 底部占位，撑出真实滚动高度 */}
+      <div className="toc-list" ref={listRef} onScroll={recompute}>
+        <div style={{ height: start * ROW }} />
+        {slice.map((c) => (
+          <div
+            key={c.index}
+            className={'chapter-item' + (c.index === currentChapter ? ' active' : '')}
+            onClick={() => loadChapter(c.index)}
+            title={c.title}
+          >
+            {c.title}
+          </div>
+        ))}
+        <div style={{ height: (chapters.length - end) * ROW }} />
+      </div>
     </div>
   );
 }
