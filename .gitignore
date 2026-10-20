@@ -1,0 +1,16 @@
+# 依赖与构建产物
+node_modules/
+dist/
+release/
+
+# 运行日志与临时文件
+*.log
+*.tmp
+*.bak
+.DS_Store
+
+# 本地工作区数据（AI 助手缓存，不属于项目）
+.workbuddy/
+
+# 本地样例书籍（含版权内容，禁止入库；可自行放入本地样本测试）
+book/

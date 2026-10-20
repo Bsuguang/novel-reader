@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+    />
+    <title>桌面宠物</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: transparent;
+        overflow: hidden;
+        user-select: none;
+        cursor: grab;
+      }
+      body:active {
+        cursor: grabbing;
+      }
+      .pet-wrap {
+        width: 160px;
+        height: 165px;
+        cursor: pointer;
+      }
+      .pet-wrap svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      /* 待机：呼吸（轻微起伏） */
+      .pet-body {
+        transform-box: fill-box;
+        transform-origin: 50% 95%;
+        animation: breathe 2.8s ease-in-out infinite;
+      }
+      @keyframes breathe {
+        0%,
+        100% {
+          transform: scale(1, 1);
+        }
+        50% {
+          transform: scale(1.035, 0.965);
+        }
+      }
+      /* 眨眼 */
+      .pet-eyes {
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: blink 4.4s infinite;
+      }
+      @keyframes blink {
+        0%,
+        92%,
+        100% {
+          transform: scaleY(1);
+        }
+        95%,
+        96% {
+          transform: scaleY(0.12);
+        }
+      }
+      /* 摇尾巴 / 扇翅膀 */
+      .pet-tail {
+        transform-box: fill-box;
+        transform-origin: 15% 85%;
+        animation: wag 1.8s ease-in-out infinite alternate;
+      }
+      @keyframes wag {
+        from {
+          transform: rotate(-8deg);
+        }
+        to {
+          transform: rotate(10deg);
+        }
+      }
+      /* 点击弹跳 */
+      .pet-wrap.bounce {
+        animation: bounce 0.55s cubic-bezier(0.28, 0.84, 0.42, 1);
+      }
+      @keyframes bounce {
+        0% {
+          transform: translateY(0) scale(1, 1);
+        }
+        25% {
+          transform: translateY(-18px) scale(0.95, 1.05);
+        }
+        50% {
+          transform: translateY(0) scale(1.08, 0.9);
+        }
+        75% {
+          transform: translateY(-6px) scale(1, 1);
+        }
+        100% {
+          transform: translateY(0) scale(1, 1);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="pet" class="pet-wrap" title="双击回到阅读器 · 可拖动 · 右键也可恢复"></div>
+    <script src="./pet.js"></script>
+  </body>
+</html>

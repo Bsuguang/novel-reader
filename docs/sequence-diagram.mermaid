@@ -1,0 +1,83 @@
+%% 1) loadFile 初始化 + 续读
+sequenceDiagram
+    participant U as App/User
+    participant S as Store
+    participant T as text.js
+    participant R as Reader
+    U->>S: loadFile(file)
+    S->>S: parseChapters(content) -> chapters (含 startChar)
+    S->>S: rawText = normalize(content)
+    S->>S: res = progress[file.path] (chapter, charPos) | 默认 {0,0}
+    S->>S: set {chapters, currentChapter:-1, chapterParagraphs:[], pendingScroll:null}
+    S->>S: loadChapter(res.chapter, res.charPos)
+    S->>T: splitChapterByRange(rawText, chapters[idx])
+    T-->>S: chapterParagraphs (每段 charStart 为全局偏移)
+    S->>S: set {currentChapter:idx, chapterParagraphs, pendingScroll:charPos|'top'}
+    S->>S: saveProgressInternal(idx, charPos|0)
+    R->>R: useEffect[chapterParagraphs] 触发 handlePendingScroll
+    R->>R: localIndex = localIndexByCharPos(chapterParagraphs, charPos)
+    R->>R: scrollToParagraph(localIndex) 或 scrollTop=0
+    R->>S: clearPendingScroll()
+
+%% 2) 翻章（按钮 / 键盘）
+sequenceDiagram
+    participant N as ChapterNav
+    participant S as Store
+    participant T as text.js
+    participant R as Reader
+    N->>S: nextChapter() / prevChapter()
+    S->>S: idx = clamp(currentChapter ± 1, 0, chapters.length-1)
+    S->>T: splitChapterByRange(rawText, chapters[idx])
+    T-->>S: chapterParagraphs
+    S->>S: set {currentChapter:idx, chapterParagraphs, pendingScroll:'top'}
+    S->>S: saveProgressInternal(idx, 0)
+    R->>R: useEffect -> scrollTop=0 (置顶当前章)
+
+%% 3) 全文搜索结果 / 书签跳转（全局 charPos -> 章 + 章内定位）
+sequenceDiagram
+    participant SB as SearchBar/BookmarkPanel
+    participant S as Store
+    participant T as text.js
+    participant R as Reader
+    SB->>S: gotoPosition(globalCharPos)
+    S->>T: findChapterByCharPos(chapters, globalCharPos)
+    T-->>S: chapterIndex (二分 startChar)
+    S->>S: loadChapter(chapterIndex, globalCharPos)
+    S->>T: splitChapterByRange(rawText, chapters[chapterIndex])
+    T-->>S: chapterParagraphs
+    S->>S: set {currentChapter, chapterParagraphs, pendingScroll:globalCharPos}
+    R->>R: useEffect -> localIndex = localIndexByCharPos(...); scrollToParagraph(localIndex)
+
+%% 4) TOC 点击（直接按章加载）
+sequenceDiagram
+    participant TOC as ChapterTOC
+    participant S as Store
+    participant T as text.js
+    participant R as Reader
+    TOC->>S: loadChapter(c.index)
+    S->>T: splitChapterByRange(rawText, chapters[c.index])
+    T-->>S: chapterParagraphs
+    S->>S: set {currentChapter:c.index, chapterParagraphs, pendingScroll:'top', currentParagraph:0}
+    R->>R: useEffect -> scrollTop=0; TOC 高亮随 currentChapter 更新
+
+%% 5) TTS 懒加载下跨章续读
+sequenceDiagram
+    participant TB as TtsBar
+    participant S as Store
+    participant T as text.js
+    participant R as Reader
+    TB->>S: play()  (从 currentChapter 起)
+    TB->>T: buildQueue(localStart, chapterParagraphs)
+    TB->>TB: speakNext() -> SpeechSynthesisUtterance(piece)
+    TB->>S: setTts({current: globalCharStart})
+    R->>R: 高亮 charStart===tts.current 的段落
+    TB->>TB: onend -> posRef++
+    alt 队列耗尽且 currentChapter<last
+        TB->>S: nextChapter()
+        S->>S: loadChapter(currentChapter+1)
+        R->>R: chapterParagraphs 更新
+        TB->>T: buildQueue(0, 新 chapterParagraphs)
+        TB->>TB: speakNext() 续读
+    else 本章读完
+        TB->>S: setTts({playing:false, current:-1})
+    end

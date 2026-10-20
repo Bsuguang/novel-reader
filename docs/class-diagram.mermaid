@@ -1,0 +1,74 @@
+classDiagram
+    class Store {
+        +string rawText
+        +Array chapters
+        +Array chapterParagraphs
+        +int currentChapter
+        +int currentParagraph
+        +bool loadingChapter
+        +pendingScroll : number | 'top' | null
+        +object tts
+        +object progress
+        +loadFile(file)
+        +loadChapter(index, charPos)
+        +nextChapter()
+        +prevChapter()
+        +gotoPosition(charPos)
+        +saveProgress()
+        +addBookmark(note)
+        +jumpToBookmark(bm)
+        +requestScroll(req)
+        +clearPendingScroll()
+    }
+    class TextUtils {
+        +splitChapterByRange(rawText, chapter) Array~Paragraph~
+        +findChapterByCharPos(chapters, charPos) int
+        +localIndexByCharPos(paragraphs, charPos) int
+    }
+    class ChapterModel {
+        +int index
+        +string title
+        +int lineIndex
+        +int startLine
+        +int endLine
+        +int startChar
+    }
+    class ParagraphModel {
+        +string text
+        +int startLine
+        +int charStart
+    }
+    class Reader {
+        +render chapterParagraphs
+        +onScroll()
+        +scrollToParagraph(idx)
+        +handlePendingScroll()
+    }
+    class ChapterNav {
+        +prev/next buttons
+        +keyboard handler
+    }
+    class ChapterTOC {
+        +click -> loadChapter
+    }
+    class SearchBar {
+        +click -> gotoPosition
+    }
+    class TtsBar {
+        +buildQueue(start, paragraphs)
+        +speakNext()
+    }
+    class BookmarkPanel {
+        +jumpToBookmark
+    }
+
+    Store "1" *-- "many" ParagraphModel : chapterParagraphs
+    Store "1" *-- "many" ChapterModel : chapters
+    TextUtils ..> ChapterModel : 读取 startChar
+    TextUtils ..> ParagraphModel : 构建(全局 charStart)
+    Reader ..> Store : useStore
+    ChapterNav ..> Store : nextChapter/prevChapter
+    ChapterTOC ..> Store : loadChapter
+    SearchBar ..> Store : gotoPosition
+    TtsBar ..> Store : chapterParagraphs/tts
+    BookmarkPanel ..> Store : jumpToBookmark

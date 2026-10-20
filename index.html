@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <!-- CSP：仅允许自身脚本/样式（style 需要 unsafe-inline 供 React 内联样式使用） -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'"
+    />
+    <title>小说阅读器</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="./dist/bundle.js"></script>
+  </body>
+</html>
